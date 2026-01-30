@@ -1,134 +1,142 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Arrow Grid Game</title>
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- CSS kommt später -->
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
   <!-- ========================= -->
-  <!-- Navigation / Tabs -->
+  <!-- APP ROOT -->
   <!-- ========================= -->
-  <header>
-    <nav id="main-nav">
-      <button id="tab-main" class="nav-button active">
-        Main
-      </button>
-      <button id="tab-editor" class="nav-button">
-        Level Editor
-      </button>
-    </nav>
-  </header>
+  <div id="app">
 
-  <!-- ========================= -->
-  <!-- MAIN TAB -->
-  <!-- ========================= -->
-  <section id="main-tab" class="tab visible">
+    <!-- ========================= -->
+    <!-- MAIN MENU SCREEN -->
+    <!-- ========================= -->
+    <section id="screen-main" class="screen visible">
 
-    <h1>Arrow Selection</h1>
+      <h1>Select Arrow</h1>
 
-    <div id="arrow-selection">
+      <div id="arrow-selection">
+        <button class="arrow-button" data-arrow="narrow">
+          <h2>Narrow Arrow</h2>
+          <p>Best for tight curves.</p>
+        </button>
 
-      <button class="arrow-button" data-arrow="narrow">
-        Narrow Arrow
-        <p>Perfekt für enge Kurven</p>
-      </button>
+        <button class="arrow-button" data-arrow="speedy">
+          <h2>Speedy Arrow</h2>
+          <p>Fastest, hard to control.</p>
+        </button>
 
-      <button class="arrow-button" data-arrow="speedy">
-        Speedy Arrow
-        <p>Sehr schnell, schwer zu kontrollieren</p>
-      </button>
+        <button class="arrow-button" data-arrow="energy">
+          <h2>Energy Arrow</h2>
+          <p>Strong wall interactions.</p>
+        </button>
+      </div>
 
-      <button class="arrow-button" data-arrow="energy">
-        Energy Arrow
-        <p>Langsam, reagiert stark auf Wände</p>
-      </button>
-
-    </div>
-
-    <div id="main-controls">
-      <button id="start-game-button">
+      <button id="start-game-button" class="primary-button">
         Start Game
       </button>
-    </div>
 
-  </section>
+    </section>
+
+    <!-- ========================= -->
+    <!-- LEVEL EDITOR MENU -->
+    <!-- ========================= -->
+    <section id="screen-editor-menu" class="screen">
+
+      <h1>My Levels</h1>
+
+      <div id="level-list">
+        <!-- Empty state initially -->
+        <p class="hint-text">No levels yet.</p>
+      </div>
+
+      <button id="create-level-button" class="primary-button">
+        Create New Level
+      </button>
+
+    </section>
+
+    <!-- ========================= -->
+    <!-- LEVEL EDITOR -->
+    <!-- ========================= -->
+    <section id="screen-editor" class="screen">
+
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <button id="back-to-editor-menu-button">
+          ← Back
+        </button>
+        <h2>Level Editor</h2>
+      </div>
+
+      <!-- Editor Canvas -->
+      <div id="editor-canvas-container">
+        <canvas id="editor-canvas"></canvas>
+      </div>
+
+      <!-- Tool Menu -->
+      <div id="editor-tools">
+
+        <button data-tool="wall-white">White Wall</button>
+        <button data-tool="wall-blue">Blue Wall</button>
+        <button data-tool="wall-green">Green Wall</button>
+        <button data-tool="wall-red">Red Wall</button>
+        <button data-tool="finish">Finish</button>
+        <button data-tool="erase">Erase</button>
+
+      </div>
+
+      <!-- Editor Actions -->
+      <div id="editor-actions">
+        <button id="play-level-button" class="primary-button">
+          Play Level
+        </button>
+      </div>
+
+    </section>
+
+    <!-- ========================= -->
+    <!-- GAME SCREEN -->
+    <!-- ========================= -->
+    <section id="screen-game" class="screen">
+
+      <div class="top-bar">
+        <button id="back-to-main-button">
+          ← Menu
+        </button>
+        <span id="timer">00:00.000</span>
+      </div>
+
+      <canvas id="game-canvas"></canvas>
+
+      <button id="reset-button">
+        Reset
+      </button>
+
+    </section>
+
+  </div>
 
   <!-- ========================= -->
-  <!-- LEVEL EDITOR TAB -->
+  <!-- BOTTOM NAVIGATION -->
   <!-- ========================= -->
-  <section id="editor-tab" class="tab">
+  <nav id="bottom-nav">
 
-    <h1>Level Editor</h1>
+    <button data-target="screen-main" class="nav-button active">
+      Home
+    </button>
 
-    <!-- Toolbar -->
-    <div id="editor-toolbar">
+    <button data-target="screen-editor-menu" class="nav-button">
+      Editor
+    </button>
 
-      <button data-tool="wall-white">
-        White Wall
-      </button>
+  </nav>
 
-      <button data-tool="wall-blue">
-        Blue Wall
-      </button>
-
-      <button data-tool="wall-green">
-        Green Wall
-      </button>
-
-      <button data-tool="finish">
-        Finish
-      </button>
-
-      <button data-tool="erase">
-        Erase
-      </button>
-
-    </div>
-
-    <!-- Editor Canvas -->
-    <div id="editor-canvas-container">
-      <canvas id="editor-canvas"></canvas>
-    </div>
-
-    <!-- Editor Controls -->
-    <div id="editor-controls">
-      <button id="play-level-button">
-        Play Level
-      </button>
-
-      <button id="save-level-button">
-        Save Level
-      </button>
-
-      <button id="load-level-button">
-        Load Level
-      </button>
-    </div>
-
-  </section>
-
-  <!-- ========================= -->
-  <!-- GAME CANVAS (shared) -->
-  <!-- ========================= -->
-  <section id="game-section">
-    <canvas id="game-canvas"></canvas>
-
-    <div id="game-ui">
-      <span id="timer">00:00.000</span>
-      <button id="reset-button">Reset</button>
-    </div>
-  </section>
-
-  <!-- ========================= -->
-  <!-- Entry Script -->
-  <!-- ========================= -->
   <script type="module" src="dist/index.js"></script>
-
 </body>
 </html>
